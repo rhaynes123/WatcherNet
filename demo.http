@@ -1,0 +1,74 @@
+### WatcherNet — Demo HTTP Requests
+### Run WatcherNet.AppHost first, then check the Aspire dashboard for the API's port.
+### Replace {{api_url}} with the actual URL shown in the dashboard (e.g. http://localhost:5241)
+
+@api_url = http://localhost:5241
+
+### 1. Seed the system with iconic Buffy encounters (run this first)
+POST {{api_url}}/encounters/seed
+
+###
+
+### 2. Check the Watchers Council global summary
+GET {{api_url}}/council/summary
+
+###
+
+### 3. Get Buffy's individual combat record
+GET {{api_url}}/slayers/Buffy
+
+###
+
+### 4. Get Faith's record (compare her "Escaped" rate — she's more reckless)
+GET {{api_url}}/slayers/Faith
+
+###
+
+### 5. Check the Sunnydale Hellmouth threat level
+GET {{api_url}}/hellmouths/Sunnydale
+
+###
+
+### 6. Check Cleveland — quieter but still active
+GET {{api_url}}/hellmouths/Cleveland
+
+###
+
+### 7. Vampire threat category — most common by far
+GET {{api_url}}/threats/Vampire
+
+###
+
+### 8. Log a single new encounter manually
+POST {{api_url}}/encounters
+Content-Type: application/json
+
+{
+  "slayer": "Buffy",
+  "location": "Sunnydale",
+  "creature": "Vampire",
+  "outcome": "Dusted"
+}
+
+###
+
+### 9. Spike gets a soul and becomes a slayer ally — add a surprise entry
+POST {{api_url}}/encounters
+Content-Type: application/json
+
+{
+  "slayer": "Spike",
+  "location": "Sunnydale",
+  "creature": "Demon",
+  "outcome": "Dusted"
+}
+
+###
+
+### 10. Re-check the Council summary — totals updated immediately
+GET {{api_url}}/council/summary
+
+###
+
+### 11. Health check
+GET {{api_url}}/health

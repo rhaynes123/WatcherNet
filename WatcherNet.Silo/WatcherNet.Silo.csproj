@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Orleans.Server is the full silo package: cluster management, grain hosting,
+         message routing, persistence, timers, reminders. The "compute node" of the cluster. -->
+    <PackageReference Include="Microsoft.Orleans.Server" Version="10.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Grains must be co-located in the silo process so Orleans can activate them.
+         The silo scans referenced assemblies for grain implementations at startup. -->
+    <ProjectReference Include="..\WatcherNet.Grains\WatcherNet.Grains.csproj" />
+    <ProjectReference Include="..\WatcherNet.ServiceDefaults\WatcherNet.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

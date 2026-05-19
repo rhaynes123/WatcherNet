@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Aspire.AppHost.Sdk is the NuGet-distributed MSBuild SDK for AppHost projects.
+       It generates the Projects.WatcherNet_Silo and Projects.WatcherNet_Api proxy types
+       from the ProjectReferences below — enabling type-safe resource registration in Program.cs.
+       This replaces the old IsAspireHost workload approach that was deprecated in .NET 10. -->
+  <!-- Version resolved from global.json msbuild-sdks section -->
+  <Sdk Name="Aspire.AppHost.Sdk" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>watchernet-apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Aspire discovers these and generates Projects.WatcherNet_Silo / Projects.WatcherNet_Api -->
+    <ProjectReference Include="..\WatcherNet.Silo\WatcherNet.Silo.csproj" />
+    <ProjectReference Include="..\WatcherNet.Api\WatcherNet.Api.csproj" />
+  </ItemGroup>
+
+</Project>

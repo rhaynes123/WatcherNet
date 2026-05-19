@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Orleans.Client connects to the silo cluster as a "thin client" —
+         it can resolve grain references and call grain methods, but does not host grains itself. -->
+    <PackageReference Include="Microsoft.Orleans.Client" Version="10.*" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Only needs Contracts (grain interfaces + models), not the Grains implementation.
+         The API never executes grain logic — it just sends messages to the silo. -->
+    <ProjectReference Include="..\WatcherNet.Contracts\WatcherNet.Contracts.csproj" />
+    <ProjectReference Include="..\WatcherNet.ServiceDefaults\WatcherNet.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

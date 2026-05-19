@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core Orleans abstractions: IGrainWithStringKey, IGrain, etc.
+         Think of these as the "interface contract" layer — the API surface of the distributed state. -->
+    <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="10.*" />
+    <!-- Serialization abstractions: [GenerateSerializer], [Id] attributes
+         Orleans must serialize grain method arguments and return values over the network. -->
+    <PackageReference Include="Microsoft.Orleans.Serialization.Abstractions" Version="10.*" />
+    <!-- Source generator: generates serialization code at compile time for all [GenerateSerializer] types -->
+    <PackageReference Include="Microsoft.Orleans.Sdk" Version="10.*" />
+  </ItemGroup>
+
+</Project>
