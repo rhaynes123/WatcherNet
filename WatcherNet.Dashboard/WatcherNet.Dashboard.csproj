@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- No Orleans packages needed — the Dashboard is a pure HTTP client.
+         It speaks to the API over HTTP and knows nothing about grain internals.
+         This is the correct separation: UI depends on the HTTP contract, not the actor model. -->
+    <ProjectReference Include="..\WatcherNet.ServiceDefaults\WatcherNet.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

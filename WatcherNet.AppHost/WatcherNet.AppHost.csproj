@@ -23,6 +23,7 @@
     <!-- Aspire discovers these and generates Projects.WatcherNet_Silo / Projects.WatcherNet_Api -->
     <ProjectReference Include="..\WatcherNet.Silo\WatcherNet.Silo.csproj" />
     <ProjectReference Include="..\WatcherNet.Api\WatcherNet.Api.csproj" />
+    <ProjectReference Include="..\WatcherNet.Dashboard\WatcherNet.Dashboard.csproj" />
   </ItemGroup>
 
 </Project>

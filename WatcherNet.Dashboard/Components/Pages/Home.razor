@@ -1,0 +1,143 @@
+@page "/"
+@rendermode InteractiveServer
+@inject IHttpClientFactory HttpClientFactory
+@implements IDisposable
+
+<PageTitle>WatcherNet — Council Summary</PageTitle>
+
+<h1 class="page-title">Watchers Council Command Center</h1>
+<p class="page-subtitle">Global threat intelligence across all active Hellmouths</p>
+
+@if (loading)
+{
+    <p class="loading">Consulting the Council archives...</p>
+}
+else if (summary is not null)
+{
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Encounters</div>
+            <div class="stat-value gold">@summary.TotalEncounters</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Neutralized</div>
+            <div class="stat-value success">@summary.TotalNeutralized</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Still At Large</div>
+            <div class="stat-value danger">@summary.TotalAtLarge</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Active Slayers</div>
+            <div class="stat-value">@summary.ActiveSlayers.Count</div>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="card">
+            <div class="card-title">Active Slayers</div>
+            <div class="tag-list">
+                @foreach (var slayer in summary.ActiveSlayers)
+                {
+                    <span class="tag">@slayer</span>
+                }
+                @if (!summary.ActiveSlayers.Any())
+                {
+                    <span class="loading">No field reports yet — seed demo data below.</span>
+                }
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Active Hellmouths</div>
+            <div class="tag-list">
+                @foreach (var loc in summary.ActiveHellmouths)
+                {
+                    <span class="tag">@loc</span>
+                }
+                @if (!summary.ActiveHellmouths.Any())
+                {
+                    <span class="loading">No locations reported yet.</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="card">
+            <div class="card-title">Most Dangerous Location</div>
+            <div class="highlight-value danger">@(summary.MostDangerousLocation == "None" ? "—" : summary.MostDangerousLocation)</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Most Common Threat</div>
+            <div class="highlight-value">@(summary.MostCommonThreat == "None" ? "—" : summary.MostCommonThreat)</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="btn btn-primary" @onclick="SeedData" disabled="@seeding">
+            @(seeding ? "Seeding..." : "Seed Demo Encounters")
+        </button>
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <span class="alert alert-success">@message</span>
+        }
+        @if (summary.LastUpdated != default)
+        {
+            <span class="last-updated">
+                Last updated: @summary.LastUpdated.ToLocalTime().ToString("HH:mm:ss")
+                &nbsp;· Auto-refreshes every 5s
+            </span>
+        }
+    </div>
+}
+
+@code {
+    private CouncilSummary? summary;
+    private bool loading = true;
+    private bool seeding = false;
+    private string message = "";
+    private Timer? timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        // Poll every 5 seconds — in a real system you'd use SignalR push from the grain
+        timer = new Timer(async _ =>
+        {
+            await LoadData();
+            await InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient("api");
+            summary = await client.GetFromJsonAsync<CouncilSummary>("/council/summary");
+        }
+        catch { /* API may still be starting up */ }
+        finally { loading = false; }
+    }
+
+    private async Task SeedData()
+    {
+        seeding = true;
+        try
+        {
+            var client = HttpClientFactory.CreateClient("api");
+            var response = await client.PostAsync("/encounters/seed", null);
+            if (response.IsSuccessStatusCode)
+            {
+                message = "Field reports received. Council archives updated.";
+                await LoadData();
+                StateHasChanged();
+                await Task.Delay(3000);
+                message = "";
+            }
+        }
+        finally { seeding = false; }
+    }
+
+    public void Dispose() => timer?.Dispose();
+}

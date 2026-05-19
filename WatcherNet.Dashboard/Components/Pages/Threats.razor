@@ -1,0 +1,114 @@
+@page "/threats"
+@rendermode InteractiveServer
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>WatcherNet — Threat Categories</PageTitle>
+
+<h1 class="page-title">Threat Intelligence by Category</h1>
+<p class="page-subtitle">Creature-type breakdowns across all Hellmouth locations</p>
+
+<div class="search-bar">
+    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+        <select class="form-control" @bind="creature">
+            <option value="">-- Select creature type --</option>
+            <option>Vampire</option>
+            <option>Demon</option>
+            <option>Werewolf</option>
+            <option>Zombie</option>
+            <option>Witch</option>
+        </select>
+    </div>
+    <button class="btn btn-primary" @onclick="LookUp" disabled="@(string.IsNullOrEmpty(creature))">
+        Analyse
+    </button>
+</div>
+
+@if (loading)
+{
+    <p class="loading">Cross-referencing Council archives...</p>
+}
+else if (error)
+{
+    <div class="alert alert-error">No intelligence data for "@creature".</div>
+}
+else if (stats is not null)
+{
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Encountered</div>
+            <div class="stat-value gold">@stats.TotalEncountered</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Neutralized</div>
+            <div class="stat-value success">@stats.Neutralized</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Still At Large</div>
+            <div class="stat-value danger">@stats.AtLarge</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Containment Rate</div>
+            <div class="stat-value">
+                @(stats.TotalEncountered > 0
+                    ? $"{(stats.Neutralized * 100 / stats.TotalEncountered)}%"
+                    : "—")
+            </div>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="card">
+            <div class="card-title">Sightings by Location</div>
+            @if (stats.ByLocation.Any())
+            {
+                <table class="breakdown-table">
+                    <thead><tr><th>Location</th><th>Encounters</th></tr></thead>
+                    <tbody>
+                        @foreach (var kv in stats.ByLocation.OrderByDescending(x => x.Value))
+                        {
+                            <tr><td>@kv.Key</td><td>@kv.Value</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else { <p class="loading">No location data.</p> }
+        </div>
+        <div class="card">
+            <div class="card-title">Encounters by Slayer</div>
+            @if (stats.BySlayer.Any())
+            {
+                <table class="breakdown-table">
+                    <thead><tr><th>Slayer</th><th>Encounters</th></tr></thead>
+                    <tbody>
+                        @foreach (var kv in stats.BySlayer.OrderByDescending(x => x.Value))
+                        {
+                            <tr><td>@kv.Key</td><td>@kv.Value</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else { <p class="loading">No slayer data.</p> }
+        </div>
+    </div>
+}
+
+@code {
+    private string creature = "";
+    private ThreatCategoryStats? stats;
+    private bool loading = false;
+    private bool error = false;
+
+    private async Task LookUp()
+    {
+        if (string.IsNullOrEmpty(creature)) return;
+        loading = true; error = false; stats = null;
+        try
+        {
+            var client = HttpClientFactory.CreateClient("api");
+            stats = await client.GetFromJsonAsync<ThreatCategoryStats>($"/threats/{Uri.EscapeDataString(creature)}");
+            error = stats is null || stats.TotalEncountered == 0;
+        }
+        catch { error = true; }
+        finally { loading = false; }
+    }
+}

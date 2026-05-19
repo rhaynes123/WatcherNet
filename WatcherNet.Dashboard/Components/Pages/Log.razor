@@ -1,0 +1,113 @@
+@page "/log"
+@rendermode InteractiveServer
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>WatcherNet — Log Encounter</PageTitle>
+
+<h1 class="page-title">Log Field Encounter</h1>
+<p class="page-subtitle">Submit a new threat encounter to the Council archives</p>
+
+<div class="card" style="max-width: 520px;">
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success" style="margin-bottom: 1.5rem;">@successMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-error" style="margin-bottom: 1.5rem;">@errorMessage</div>
+    }
+
+    <div class="form-group">
+        <label class="form-label">Slayer</label>
+        <input class="form-control" @bind="slayer" placeholder="e.g. Buffy" />
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Location</label>
+        <input class="form-control" @bind="location" placeholder="e.g. Sunnydale" />
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Creature Type</label>
+        <select class="form-control" @bind="creature">
+            <option value="">-- Select type --</option>
+            <option>Vampire</option>
+            <option>Demon</option>
+            <option>Werewolf</option>
+            <option>Zombie</option>
+            <option>Witch</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Outcome</label>
+        <select class="form-control" @bind="outcome">
+            <option value="">-- Select outcome --</option>
+            <option value="Dusted">Dusted (Vampire eliminated)</option>
+            <option value="Captured">Captured (contained)</option>
+            <option value="Escaped">Escaped (still at large)</option>
+        </select>
+    </div>
+
+    <button class="btn btn-primary" @onclick="Submit"
+            disabled="@(!IsValid || submitting)"
+            style="width: 100%; margin-top: 0.5rem;">
+        @(submitting ? "Reporting to Council..." : "Submit Encounter Report")
+    </button>
+</div>
+
+<div class="card" style="max-width: 520px; margin-top: 1rem;">
+    <div class="card-title">How this works</div>
+    <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+        When you submit, the API fans out to <strong>four grains in parallel</strong>:
+        the <em>@(string.IsNullOrEmpty(slayer) ? "Slayer" : slayer)</em> grain,
+        the <em>@(string.IsNullOrEmpty(location) ? "Location" : location)</em> Hellmouth grain,
+        the <em>@(string.IsNullOrEmpty(creature) ? "Creature" : creature)</em> threat grain,
+        and the singleton Council grain.
+        Each updates its own isolated partition — no shared locks, no contention.
+        Return to Council Summary to see totals update immediately.
+    </p>
+</div>
+
+@code {
+    private string slayer = "";
+    private string location = "";
+    private string creature = "";
+    private string outcome = "";
+    private bool submitting = false;
+    private string successMessage = "";
+    private string errorMessage = "";
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(slayer) &&
+        !string.IsNullOrWhiteSpace(location) &&
+        !string.IsNullOrEmpty(creature) &&
+        !string.IsNullOrEmpty(outcome);
+
+    private async Task Submit()
+    {
+        submitting = true;
+        successMessage = ""; errorMessage = "";
+        try
+        {
+            var client = HttpClientFactory.CreateClient("api");
+            var request = new ThreatEncounterRequest(slayer.Trim(), location.Trim(), creature, outcome);
+            var response = await client.PostAsJsonAsync("/encounters", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = $"{slayer} reported a {outcome.ToLower()} {creature} in {location}. Council archives updated.";
+                slayer = ""; location = ""; creature = ""; outcome = "";
+            }
+            else
+            {
+                errorMessage = "The Council was unable to process this report. Try again.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Connection to the Council lost. Is the silo running?";
+        }
+        finally { submitting = false; }
+    }
+}

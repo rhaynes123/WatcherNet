@@ -3,10 +3,10 @@
 // how they relate to each other, and what resources they need.
 //
 // When you run this project:
-//   1. Aspire launches the Aspire Developer Dashboard (http://localhost:18888 by default)
-//   2. It starts WatcherNet.Silo and WatcherNet.Api as managed child processes
+//   1. Aspire launches the Aspire Developer Dashboard (http://localhost:15000)
+//   2. It starts WatcherNet.Silo, WatcherNet.Api, and WatcherNet.Dashboard as managed child processes
 //   3. It injects environment variables (ports, OTEL endpoints, connection strings) automatically
-//   4. All logs, traces, and metrics from both services flow to the dashboard in real time
+//   4. All logs, traces, and metrics from all services flow to the dashboard in real time
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -15,12 +15,18 @@ var builder = DistributedApplication.CreateBuilder(args);
 // from the ProjectReference in this .csproj — no magic strings.
 var silo = builder.AddProject<Projects.WatcherNet_Silo>("silo");
 
-builder.AddProject<Projects.WatcherNet_Api>("api")
+var api = builder.AddProject<Projects.WatcherNet_Api>("api")
     // WithReference propagates the silo's address to the API via environment variables.
     // The API doesn't need a config file entry for the silo address — Aspire handles it.
     .WithReference(silo)
-    // WithExternalHttpEndpoints makes the API's port accessible from outside the Aspire process,
-    // so you can hit it from a browser, curl, or an HTTP client file.
+    // WithExternalHttpEndpoints makes the API's port accessible from outside the Aspire process.
+    .WithExternalHttpEndpoints();
+
+// Blazor Server dashboard — Aspire injects the API URL via service discovery.
+// The Dashboard never talks to Orleans directly; it only speaks HTTP to the API.
+// WithReference(api) means the Dashboard knows where the API is — no config needed.
+builder.AddProject<Projects.WatcherNet_Dashboard>("dashboard")
+    .WithReference(api)
     .WithExternalHttpEndpoints();
 
 builder.Build().Run();
