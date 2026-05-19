@@ -38,7 +38,7 @@ The Watchers Council needs a real-time threat intelligence platform. Slayers in 
 | Service registry / discovery | Built-in, injected automatically via `ServiceDefaults` |
 | Observability stack (traces/metrics/logs) | Aspire Developer Dashboard — zero config |
 | Connection string management | `WithReference()` — Aspire injects env vars automatically |
-| Running a multi-service stack locally | `dotnet run --project WatcherNet.AppHost` |
+| Running a multi-service stack locally | See **Running the project** below |
 
 ---
 
@@ -126,6 +126,10 @@ WatcherNet/
 ### Start
 
 ```bash
+# Start the Aspire dashboard container first (Aspire 13.x requires an external dashboard):
+docker run -d -p 18888:18888 -p 18889:18889 -e DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true --name aspire-dashboard mcr.microsoft.com/dotnet/aspire-dashboard:latest
+
+# Then start the AppHost (env vars are pre-configured in launchSettings.json):
 dotnet run --project WatcherNet.AppHost
 ```
 
